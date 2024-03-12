@@ -82,6 +82,7 @@ contract DSCEngine is ReentrancyGuard {
     /////////////////
 
     event CollateralDeposited(address indexed user, address indexed token, uint256 indexed amount);
+    event CollateralRedeemed(address indexed user, address indexed token, uint256 indexed amount);
 
     /////////////////
     // Modifiers   //
@@ -154,9 +155,37 @@ contract DSCEngine is ReentrancyGuard {
         }
     }
 
-    function redeemCollateralForDsc() external {}
+    /**
+     * @param tokenCollateralAddress The collateral address to redeem
+     * @param amountCollateral The amount of collateral to redeem
+     * @param amountDscToBurn The amount of DSC to burn
+     * This function burns DSC and redeems underlying collateral in one transaction
+     */
+    function redeemCollateralForDsc(address tokenCollateralAddress, uint256 amountCollateral, uint256 amountDscToBurn)
+        external
+    {
+        burnDsc(amountDscToBurn);
+        redeemCollateral(tokenCollateralAddress, amountCollateral);
+        // redeemCollateral() already checks health factor
+    }
 
-    function redeemCollateral() external {}
+    // in order to reedem collateral
+    // 1. Health factor must be over 1 AFTER collateral pulled
+    // DRY: Don't Repeat Yourself
+    // CEI: Check-Effect-Interact
+    function redeemCollateral(address tokenCollateralAddress, uint256 amountCollateral)
+        public
+        moreThanZero(amountCollateral)
+        nonReentrant
+    {
+        s_collateralDeposited[msg.sender][tokenCollateralAddress] -= amountCollateral; // how much the user put in collateral -= how much user wants to pull out
+        emit CollateralRedeemed(msg.sender, tokenCollateralAddress, amountCollateral);
+        bool success = IERC20(tokenCollateralAddress).transfer(msg.sender, amountCollateral); // переводим залог пользователю
+        if (!success) {
+            revert DSCEngine__TransferFailed();
+        }
+        _revertifHealthFactorIsBroken(msg.sender); // проверяем HealthFactor
+    }
 
     /**
      * @notice follows CEI
@@ -173,7 +202,15 @@ contract DSCEngine is ReentrancyGuard {
         }
     }
 
-    function burnDsc() external {}
+    function burnDsc(uint256 amount) public moreThanZero(amount) {
+        s_DSCMinted[msg.sender] -= amount; // вычетаем из того сколько пользователь создал DSC, то что он хочет сжечь
+        bool success = i_dsc.transferFrom(msg.sender, address(this), amount);
+        if (!success) {
+            revert DSCEngine__TransferFailed();
+        }
+        i_dsc.burn(amount); // burn function is from ERC20Burnable.sol
+        _revertifHealthFactorIsBroken(msg.sender); // I don't think this would ever hit...
+    }
 
     function liquidate() external {}
 
