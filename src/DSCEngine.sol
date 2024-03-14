@@ -85,7 +85,9 @@ contract DSCEngine is ReentrancyGuard {
     /////////////////
 
     event CollateralDeposited(address indexed user, address indexed token, uint256 indexed amount);
-    event CollateralRedeemed(address indexed redeemedFrom, address indexed redeemedTo, address indexed token, uint256 amount);
+    event CollateralRedeemed(
+        address indexed redeemedFrom, address indexed redeemedTo, address indexed token, uint256 amount
+    );
 
     /////////////////
     // Modifiers   //
@@ -257,7 +259,7 @@ contract DSCEngine is ReentrancyGuard {
         _burnDsc(debtToCover, user, msg.sender);
 
         uint256 endingUserHealthFactor = _healthFactor(user);
-        if (endingUserHealthFactor <= startingUserHealthFactor){
+        if (endingUserHealthFactor <= startingUserHealthFactor) {
             revert DSCEngine__HealthFactorNotImproved();
         }
         _revertifHealthFactorIsBroken(msg.sender);
@@ -268,7 +270,7 @@ contract DSCEngine is ReentrancyGuard {
     //////////////////////////////////////////
     // Private & Internal View Functions   //
     /////////////////////////////////////////
-    
+
     /**
      * Low-level internal function, do not call unless the function calling it is checking for health factors being broken
      */
@@ -281,7 +283,9 @@ contract DSCEngine is ReentrancyGuard {
         i_dsc.burn(amountDscToBurn); // burn function is from ERC20Burnable.sol
     }
 
-    function _redeemCollateral(address from, address to, address tokenCollateralAddress, uint256 amountCollateral) private  {
+    function _redeemCollateral(address from, address to, address tokenCollateralAddress, uint256 amountCollateral)
+        private
+    {
         s_collateralDeposited[from][tokenCollateralAddress] -= amountCollateral; // how much the user put in collateral -= how much user wants to pull out
         emit CollateralRedeemed(from, to, tokenCollateralAddress, amountCollateral);
         bool success = IERC20(tokenCollateralAddress).transfer(to, amountCollateral); // переводим залог пользователю
@@ -355,5 +359,13 @@ contract DSCEngine is ReentrancyGuard {
         // 1 ETH = $1000
         // The returned value from CL will be 1000 * 1e8
         return ((uint256(price) * ADDITIONAL_FEED_PRECISION) * amount) / PRECISION;
+    }
+
+    function getAccountInformation(address user)
+        external
+        view
+        returns (uint256 totalDscMinted, uint256 collateralValueInUsd)
+    {
+        (totalDscMinted, collateralValueInUsd) = _getAccountInformation(user);
     }
 }
