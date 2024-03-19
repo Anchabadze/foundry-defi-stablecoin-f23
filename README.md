@@ -8,3 +8,6 @@
 3. Collateral: Exogenous (Crypto)
    1. wETH (ERC20 version)
    2. wBTC (ERC20 version)
+
+
+1. What are our invariants/properties?
