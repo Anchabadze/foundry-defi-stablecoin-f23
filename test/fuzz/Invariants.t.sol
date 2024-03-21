@@ -17,7 +17,7 @@ import {DecentralizedStableCoin} from "../../src/DecentralizedStableCoin.sol";
 import {HelperConfig} from "../../script/HelperConfig.s.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract InvariantsTest is StdInvariant, Test {
+contract Invariants is StdInvariant, Test {
     DeployDSC deployer;
     DSCEngine dsce;
     DecentralizedStableCoin dsc;
@@ -30,6 +30,7 @@ contract InvariantsTest is StdInvariant, Test {
         (dsc, dsce, config) = deployer.run();
         (,, weth, wbtc,) = config.activeNetWorkConfig();
         targetContract(address(dsce)); // контракт, в котором мы будем проверять инварианты
+            // don't call redeemcollateral, unless there is collateral to redeem
     }
 
     function invariant_protocolMustHaveMoreValueThanTotalSupply() public view {
