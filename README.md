@@ -10,4 +10,13 @@
    2. wBTC (ERC20 version)
 
 
-1. What are our invariants/properties?
+- calculate health factor function
+- set health factor if debt is 0
+- added a bunch of view functions
+
+
+4. What are our invariants/properties?
+
+5. Some proper oracle use
+6. Write more tests
+7. Smart Contract Audit Preparation
