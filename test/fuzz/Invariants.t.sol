@@ -50,7 +50,12 @@ contract Invariants is StdInvariant, Test {
         // console.log("weth value: ", wethValue);
         // console.log("wbtc value: ", wbtcValue);
         // console.log("total supply: ", totalSupply);
+        // console.log("Times mint called: ", handler.timesMintIsCalled());
 
         assert(wethValue + wbtcValue >= totalSupply); // fuzz test will try to breal this invariant
+    }
+
+    function invariant_gettersShouldNotRevert() public view {
+        dsce.getCollateralTokens();
     }
 }
